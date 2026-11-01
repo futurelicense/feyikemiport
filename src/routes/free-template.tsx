@@ -45,7 +45,10 @@ function FreeTemplatePage() {
   };
 
   useEffect(() => {
-    if (readerOpen) readerRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    if (readerOpen) {
+      readerRef.current?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth", block: "start" });
+      readerRef.current?.querySelector<HTMLButtonElement>(".reader-close")?.focus({ preventScroll: true });
+    }
   }, [readerOpen]);
 
   useEffect(() => {
@@ -54,7 +57,7 @@ function FreeTemplatePage() {
       if (e.key === "ArrowRight") setPage((p) => Math.min(p + 1, total - 1));
       if (e.key === "ArrowLeft") setPage((p) => Math.max(p - 1, 0));
       if (e.key === "ArrowRight" || e.key === "ArrowLeft") setTurn((t) => t + 1);
-      if (e.key === "Escape") setReaderOpen(false);
+      if (e.key === "Escape") { setReaderOpen(false); previewButtonRef.current?.focus(); }
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
@@ -64,7 +67,6 @@ function FreeTemplatePage() {
     <>
       <ImpactBand />
       <PageTopline label="FREE TEMPLATE" />
-      <Engagement />
 
       <section className="section container" id="free-template">
         <div className="sectionhead">
@@ -99,7 +101,7 @@ function FreeTemplatePage() {
               <strong>Official illustrated cover</strong> · First edition, 2026
             </div>
             <div className="hero-book-note">
-              Presented with the real cover plus supporting preview cards from the handbook itself.
+              Explore selected pages before downloading the free sample.
             </div>
           </div>
 
@@ -208,6 +210,7 @@ function FreeTemplatePage() {
           </p>
         </div>
       </section>
+      <details className="container engagement-disclosure"><summary>Portfolio activity <span>Views, visits &amp; downloads +</span></summary><Engagement /></details>
     </>
   );
 }

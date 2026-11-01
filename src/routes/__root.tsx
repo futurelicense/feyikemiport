@@ -6,7 +6,8 @@ import {
   Scripts,
   createRootRouteWithContext,
 } from "@tanstack/react-router";
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
+import { useLocation } from "@tanstack/react-router";
 
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -18,7 +19,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width,initial-scale=1" },
-      { name: "theme-color", content: "#102e28" },
+      { name: "theme-color", content: "#0A593D" },
       { title: "Feyikemi Akinyelure, MSc, PMP" },
     ],
     links: [
@@ -26,7 +27,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap",
       },
       { rel: "stylesheet", href: appCss },
       { rel: "icon", href: "/assets/handbook_1.png", type: "image/png" },
@@ -62,10 +63,55 @@ function RootComponent() {
 
 function Layout() {
   useRegisterVisit();
+  const pathname = useLocation({ select: location => location.pathname });
+  const progressRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const updateProgress = () => {
+      const distance = document.documentElement.scrollHeight - window.innerHeight;
+      if (progressRef.current) progressRef.current.style.transform = `scaleX(${distance > 0 ? Math.min(1, window.scrollY / distance) : 0})`;
+    };
+    const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const animations = new Set<Animation>();
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        observer.unobserve(entry.target);
+        if (!motionPreference.matches) {
+          const animation = entry.target.animate(
+            [{ opacity: 0, transform: "translateY(22px)" }, { opacity: 1, transform: "none" }],
+            { duration: 700, easing: "cubic-bezier(.2,.8,.2,1)" },
+          );
+          animations.add(animation);
+          animation.onfinish = () => animations.delete(animation);
+        }
+      });
+    }, { threshold: 0.08 });
+    document.querySelectorAll(".sectionhead, .story-opening, .community-heading, .work-heading, .handbook-copy, .invitation-content, .publication > div, .panel, .award").forEach(element => observer.observe(element));
+    const onMotionChange = () => {
+      if (motionPreference.matches) {
+        animations.forEach(animation => animation.cancel());
+        animations.clear();
+      }
+    };
+    motionPreference.addEventListener("change", onMotionChange);
+    window.addEventListener("scroll", updateProgress, { passive: true });
+    window.addEventListener("resize", updateProgress);
+    const resizeObserver = new ResizeObserver(updateProgress);
+    resizeObserver.observe(document.body);
+    updateProgress();
+    return () => {
+      observer.disconnect(); resizeObserver.disconnect();
+      motionPreference.removeEventListener("change", onMotionChange);
+      window.removeEventListener("scroll", updateProgress); window.removeEventListener("resize", updateProgress);
+      animations.forEach(animation => animation.cancel());
+    };
+  }, [pathname]);
   return (
     <>
+      <a className="skip-link" href="#main-content">Skip to content</a>
+      <div className="reading-progress" ref={progressRef} aria-hidden="true" />
       <SiteHeader />
-      <main>
+      <main id="main-content" tabIndex={-1}>
         <Outlet />
       </main>
       <SiteFooter />
