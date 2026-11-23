@@ -20,7 +20,10 @@ the current browser (the badge says "Demo mode · this browser only").
 2. Copy `.env.example` to `.env` and set `VITE_SUPABASE_URL` + `VITE_SUPABASE_PUBLISHABLE_KEY`
    (Settings → API; publishable/anon key only). Set the same two vars on the host (Vercel etc.).
 3. Optional hourly bump (+2 downloads, +2 views): add GitHub Actions secrets `SUPABASE_URL` and
-   `SUPABASE_SECRET_KEY` (service role / `sb_secret_` key). See `.github/workflows/increment-activity.yml`.
+   `SUPABASE_SECRET_KEY` (service role / `sb_secret_` key). Without both secrets, the workflow skips
+   the increment with a notice and a run summary; no counters are changed. Normal website activity
+   tracking does not depend on this optional job. Configured jobs still fail if the Supabase request
+   fails. See `.github/workflows/increment-activity.yml`.
 
 ## What is counted (each event adds exactly 1)
 
